@@ -437,21 +437,72 @@
     .palette { justify-content: center; }
     .stats { grid-template-columns: repeat(2, 1fr); }
     .skills, .projects { grid-template-columns: 1fr; }
-    .page-ind, .cmd-out { display: none; }
+    .page-ind { display: none; }
+    .cmd-out { max-width: 45%; overflow: hidden; text-overflow: ellipsis; }
     .head-links a:not(.cta) { display: none; }
   }
-  @media (max-width: 520px) {
-    body { padding: 16px 16px 28px; }
-    .t-body { padding: 20px 16px; height: auto; max-height: 72vh; }
+  .hint .touch { display: none; }
+  @media (max-width: 600px) {
+    body { padding: 14px 12px 24px; }
+    body::before { top: 10%; height: 360px; }
+    .site-head { margin-bottom: 16px; }
+    .brand { font-size: 14px; }
+    .brand small { font-size: 11px; }
+    .head-links .cta { padding: 8px 12px; font-size: 12.5px; }
+
+    /* terminal grows with content; the page scrolls, not the box */
+    .terminal { overflow: clip; border-radius: 12px; }
+    .t-titlebar { padding: 10px 12px; }
+    .dots i { width: 10px; height: 10px; }
+    .status { font-size: 10.5px; padding: 3px 8px; }
+    .tab { padding: 10px 13px; font-size: 12px; }
+    .tab .ext { display: none; }
+    .t-body { padding: 18px 14px 22px; height: auto; min-height: 0; max-height: none; overflow: visible; }
+    .prompt { font-size: 12px; margin-bottom: 16px; }
+
+    /* hello */
+    .hello { gap: 22px; }
+    .photo-frame { width: 168px; }
+    .wave { font-size: 12px; }
     .name { font-size: 26px; }
-    .photo-frame { width: 180px; }
-    .stats { grid-template-columns: 1fr 1fr; }
-    .t-body { min-height: 0; }
-    .head-links .cta { padding: 7px 10px; }
-    .brand small { display: none; }
+    .role { font-size: 13px; min-height: 20px; }
+    .sep { margin: 12px 0 10px; }
+    .facts { font-size: 12.5px; gap: 6px; }
+    .facts dt { min-width: 70px; }
     .facts dd { white-space: normal; }
+    .summary { font-size: 14px; line-height: 1.7; padding: 14px 14px; margin-top: 24px; }
+    .stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat { padding: 12px; }
+    .stat .v { font-size: 18px; }
+    .stat .s { font-size: 10.5px; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .actions .btn { justify-content: center; padding: 11px 8px; }
+    .actions .btn.primary, .actions .btn[download] { grid-column: span 3; }
     .actions .divider { display: none; }
+
+    /* experience */
+    .gitlog { padding-left: 20px; }
+    .gitlog::before { left: 4px; }
+    .commit::before { left: -21px; width: 10px; height: 10px; }
+    .commit-card { padding: 14px; }
+    .commit h3 { font-size: 15.5px; }
+    .commit h3 span { display: block; font-size: 13.5px; margin-top: 2px; }
+    .commit li { font-size: 13px; }
     .date { margin-left: 0; width: 100%; }
+
+    /* projects / skills / certs */
+    .proj, .ns { padding: 14px; }
+    .env { font-size: 12px; line-height: 1.75; word-break: break-word; }
+    .cert { grid-template-columns: 1fr; padding: 12px 14px; }
+    .cert .badge { grid-row: auto; grid-column: 1; justify-self: start; margin-top: 4px; }
+    .cert .lnk { opacity: 1; }
+
+    /* bottom bar sticks to the screen while scrolling */
+    .t-foot { position: sticky; bottom: 0; z-index: 5; padding: 10px 12px; box-shadow: 0 -8px 20px rgba(0,0,0,.35); }
+    .nav button { width: 40px; height: 34px; }
+
+    .hint .desk { display: none; }
+    .hint .touch { display: inline; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -767,7 +818,7 @@
       <button aria-label="Page 4"></button>
       <button aria-label="Page 5"></button>
     </div>
-    <p class="hint">Use <kbd>←</kbd> <kbd>→</kbd> to navigate · or type <kbd>help</kbd> in the terminal</p>
+    <p class="hint"><span class="desk">Use <kbd>←</kbd> <kbd>→</kbd> to navigate · or type <kbd>help</kbd> in the terminal</span><span class="touch">Swipe left / right or tap a tab to explore</span></p>
   </div>
 
 <script>
@@ -789,7 +840,18 @@
     dots.forEach((d, k) => d.classList.toggle('active', k === cur));
     ind.innerHTML = `<b>${cur + 1}</b>/${panels.length} · ${files[cur]}`;
     body.scrollTop = 0;
+    tabs[cur].scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    const term = document.getElementById('terminal');
+    if (term.getBoundingClientRect().top < 0) term.scrollIntoView({ behavior: 'smooth' });
   }
+
+  // swipe between pages on touch devices
+  let sx = 0, sy = 0;
+  body.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  body.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) go(cur + (dx < 0 ? 1 : -1));
+  }, { passive: true });
 
   // rotating role typewriter
   const roleEl = document.getElementById('roleText');
